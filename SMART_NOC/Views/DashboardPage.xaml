@@ -11,7 +11,6 @@
     <Page.Resources>
         <ThemeShadow x:Name="SharedShadow" />
 
-        <!-- 🔥 MODERN GLASS CARD STYLE 🔥 -->
         <Style x:Key="FloatingGlassCard" TargetType="Border">
             <Setter Property="Background" Value="#0D1B2A"/>
             <Setter Property="BorderBrush" Value="#1E3A52"/>
@@ -21,7 +20,6 @@
             <Setter Property="Shadow" Value="{StaticResource SharedShadow}"/>
         </Style>
 
-        <!-- 🔥 KPI VALUE STYLE 🔥 -->
         <Style x:Key="KpiValueStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="36"/>
             <Setter Property="FontWeight" Value="Bold"/>
@@ -30,7 +28,6 @@
             <Setter Property="FontFamily" Value="{StaticResource InterBold}"/>
         </Style>
 
-        <!-- 🔥 KPI LABEL STYLE 🔥 -->
         <Style x:Key="KpiLabelStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="#4B9CD9"/>
@@ -39,7 +36,6 @@
             <Setter Property="FontFamily" Value="{StaticResource InterBold}"/>
         </Style>
 
-        <!-- 🔥 STAT BADGE STYLE 🔥 -->
         <Style x:Key="StatBadgeStyle" TargetType="Border">
             <Setter Property="Background" Value="#0D1B2A"/>
             <Setter Property="BorderBrush" Value="#1E3A52"/>
@@ -48,7 +44,6 @@
             <Setter Property="Padding" Value="14,10"/>
         </Style>
 
-        <!-- 🔥 ZOOM BUTTON STYLE 🔥 -->
         <Style x:Key="ZoomButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#0D1B2A"/>
             <Setter Property="BorderBrush" Value="#1E3A52"/>
@@ -60,7 +55,6 @@
             <Setter Property="Foreground" Value="White"/>
         </Style>
 
-        <!-- 🔥 SECTION TITLE STYLE 🔥 -->
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="Bold"/>
@@ -69,7 +63,6 @@
             <Setter Property="FontFamily" Value="{StaticResource InterBold}"/>
         </Style>
 
-        <!-- 🔥 SECTION SUBTITLE STYLE 🔥 -->
         <Style x:Key="SectionSubtitleStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="#A0FFFFFF"/>
@@ -89,19 +82,13 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- 🔥 HEADER SECTION 🔥 -->
             <Grid Grid.Row="0" Margin="0,0,0,12">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" MinWidth="300"/>
                     <ColumnDefinition Width="Auto" MinWidth="400"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Title & Subtitle (Left side) -->
-                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="10" VerticalAlignment="Center" Margin="0,0,24,0">
+                <StackPanel Grid.Column="0" Spacing="10" VerticalAlignment="Center" Margin="0,0,24,0">
                     <TextBlock Text="NOC COMMAND CENTER" 
                                FontSize="28" 
                                FontWeight="Bold" 
@@ -120,9 +107,7 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Filter Controls (Right side) -->
-                <Border Grid.Row="0" 
-                        Grid.Column="1"
+                <Border Grid.Column="1" 
                         Style="{StaticResource FloatingGlassCard}" 
                         Padding="14,10"
                         PointerEntered="FilterCard_PointerEntered"
@@ -138,7 +123,6 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Search Box -->
                         <AutoSuggestBox x:Name="DashboardSearchBox" 
                                        Grid.Column="0"
                                        Width="180" 
@@ -151,10 +135,8 @@
                                        BorderBrush="#1E3A52"
                                        CornerRadius="8"/>
 
-                        <!-- Divider -->
                         <Border Grid.Column="1" Width="1.5" Height="24" Background="#1E3A52" Margin="10,0"/>
 
-                        <!-- From Date -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="0,0,10,0">
                             <TextBlock Text="From:" 
                                       VerticalAlignment="Center" 
@@ -166,7 +148,6 @@
                                               DateChanged="Filter_Changed"/>
                         </StackPanel>
 
-                        <!-- To Date -->
                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="0,0,10,0">
                             <TextBlock Text="To:" 
                                       VerticalAlignment="Center" 
@@ -178,10 +159,8 @@
                                               DateChanged="Filter_Changed"/>
                         </StackPanel>
 
-                        <!-- Divider -->
                         <Border Grid.Column="4" Width="1.5" Height="20" Background="#1E3A52" Margin="8,0"/>
 
-                        <!-- Refresh Button -->
                         <Button Grid.Column="5"
                                Click="BtnRefresh_Click" 
                                Style="{StaticResource ZoomButtonStyle}"
@@ -196,7 +175,6 @@
                 </Border>
             </Grid>
 
-            <!-- 🔥 KPI CARDS GRID 🔥 -->
             <Grid Grid.Row="1" ColumnSpacing="14">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -206,7 +184,6 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- TOTAL INCIDENTS -->
                 <Border Style="{StaticResource FloatingGlassCard}"
                         PointerEntered="KpiCard_PointerEntered"
                         PointerExited="KpiCard_PointerExited">
@@ -223,16 +200,10 @@
                                       Foreground="#94A3B8" 
                                       Margin="0,6,0,0"/>
                         </StackPanel>
-                        <FontIcon Glyph="&#xE9F9;" 
-                                 HorizontalAlignment="Right" 
-                                 VerticalAlignment="Top" 
-                                 FontSize="32" 
-                                 Foreground="#00B4FF" 
-                                 Opacity="0.12"/>
+                        <FontIcon Glyph="&#xE9F9;" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="32" Foreground="#00B4FF" Opacity="0.12"/>
                     </Grid>
                 </Border>
 
-                <!-- ACTIVE/OPEN ISSUES -->
                 <Border Grid.Column="1" 
                         Style="{StaticResource FloatingGlassCard}"
                         PointerEntered="KpiCard_PointerEntered"
@@ -251,16 +222,10 @@
                                       Margin="0,6,0,0" 
                                       FontWeight="SemiBold"/>
                         </StackPanel>
-                        <FontIcon Glyph="&#xE783;" 
-                                 HorizontalAlignment="Right" 
-                                 VerticalAlignment="Top" 
-                                 FontSize="32" 
-                                 Foreground="#FF3B30" 
-                                 Opacity="0.12"/>
+                        <FontIcon Glyph="&#xE783;" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="32" Foreground="#FF3B30" Opacity="0.12"/>
                     </Grid>
                 </Border>
 
-                <!-- RESOLVED -->
                 <Border Grid.Column="2" 
                         Style="{StaticResource FloatingGlassCard}"
                         PointerEntered="KpiCard_PointerEntered"
@@ -278,16 +243,10 @@
                                       Foreground="#94A3B8" 
                                       Margin="0,6,0,0"/>
                         </StackPanel>
-                        <FontIcon Glyph="&#xE73E;" 
-                                 HorizontalAlignment="Right" 
-                                 VerticalAlignment="Top" 
-                                 FontSize="32" 
-                                 Foreground="#34C759" 
-                                 Opacity="0.12"/>
+                        <FontIcon Glyph="&#xE73E;" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="32" Foreground="#34C759" Opacity="0.12"/>
                     </Grid>
                 </Border>
 
-                <!-- AVG MTTR -->
                 <Border Grid.Column="3" 
                         Style="{StaticResource FloatingGlassCard}"
                         PointerEntered="KpiCard_PointerEntered"
@@ -306,16 +265,10 @@
                                       Margin="0,6,0,0" 
                                       FontWeight="SemiBold"/>
                         </StackPanel>
-                        <FontIcon Glyph="&#xE916;" 
-                                 HorizontalAlignment="Right" 
-                                 VerticalAlignment="Top" 
-                                 FontSize="32" 
-                                 Foreground="#FF9500" 
-                                 Opacity="0.12"/>
+                        <FontIcon Glyph="&#xE916;" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="32" Foreground="#FF9500" Opacity="0.12"/>
                     </Grid>
                 </Border>
 
-                <!-- SLA COMPLIANCE -->
                 <Border Grid.Column="4" 
                         Style="{StaticResource FloatingGlassCard}"
                         PointerEntered="KpiCard_PointerEntered"
@@ -335,17 +288,11 @@
                                         Foreground="#5856D6"
                                         Background="#1E3A52"/>
                         </StackPanel>
-                        <FontIcon Glyph="&#xE826;" 
-                                 HorizontalAlignment="Right" 
-                                 VerticalAlignment="Top" 
-                                 FontSize="32" 
-                                 Foreground="#5856D6" 
-                                 Opacity="0.12"/>
+                        <FontIcon Glyph="&#xE826;" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="32" Foreground="#5856D6" Opacity="0.12"/>
                     </Grid>
                 </Border>
             </Grid>
 
-            <!-- 🔥 QUICK STATS ROW 🔥 -->
             <Grid Grid.Row="2" ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -408,14 +355,12 @@
                 </Border>
             </Grid>
 
-            <!-- 🔥 CHARTS SECTION 🔥 -->
             <Grid Grid.Row="3" ColumnSpacing="20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2.5*"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- TREND CHART -->
                 <Border Style="{StaticResource FloatingGlassCard}"
                         PointerEntered="ChartCard_PointerEntered"
                         PointerExited="ChartCard_PointerExited">
@@ -426,7 +371,6 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Chart Header -->
                         <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
                             <FontIcon Glyph="&#xE9D2;" FontSize="16" Foreground="#00B4FF"/>
                             <TextBlock Text="📈 INCIDENT TREND ANALYSIS" 
@@ -435,7 +379,6 @@
                                       Margin="0"/>
                         </StackPanel>
 
-                        <!-- Zoom Controls -->
                         <StackPanel Grid.Row="1" 
                                    Orientation="Horizontal" 
                                    Spacing="8" 
@@ -490,7 +433,6 @@
                                       Margin="4,0,0,0"/>
                         </StackPanel>
 
-                        <!-- Chart -->
                         <lvc:CartesianChart x:Name="DashboardTrendChart" 
                                            Grid.Row="2" 
                                            Background="Transparent">
@@ -498,7 +440,6 @@
                     </Grid>
                 </Border>
 
-                <!-- ROOT CAUSE PIE CHART -->
                 <Border Grid.Column="1" 
                         Style="{StaticResource FloatingGlassCard}"
                         PointerEntered="ChartCard_PointerEntered"
@@ -530,22 +471,19 @@
                 </Border>
             </Grid>
 
-            <!-- 🔥 ANALYTICS SECTION TITLE 🔥 -->
             <StackPanel Grid.Row="4" Spacing="6">
                 <TextBlock Text="DETAILED ANALYTICS" 
-                          Style="{StaticResource SectionTitleStyle}"/>
+                           Style="{StaticResource SectionTitleStyle}"/>
                 <TextBlock Text="In-depth insights, trends, and performance metrics" 
-                          Style="{StaticResource SectionSubtitleStyle}"/>
+                           Style="{StaticResource SectionSubtitleStyle}"/>
             </StackPanel>
 
-            <!-- 🔥 BOTTOM ANALYTICS SECTION 🔥 -->
             <Grid Grid.Row="5" ColumnSpacing="20" Margin="0,12,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- TOP PROBLEMATIC SEGMENTS -->
                 <Border Style="{StaticResource FloatingGlassCard}"
                         PointerEntered="AnalyticsCard_PointerEntered"
                         PointerExited="AnalyticsCard_PointerExited">
@@ -615,7 +553,7 @@
                                                Padding="10,6" 
                                                VerticalAlignment="Center" 
                                                Margin="8,0,0,0">
-                                            <TextBlock Text="{Binding Count}" 
+                                            <TextBlock Text="{Binding RealCount}" 
                                                       Foreground="#FF3B30" 
                                                       FontWeight="Bold" 
                                                       FontSize="12"
@@ -628,7 +566,6 @@
                     </Grid>
                 </Border>
 
-                <!-- RECENT ACTIVITY LOG -->
                 <Border Grid.Column="1" 
                         Style="{StaticResource FloatingGlassCard}"
                         PointerEntered="AnalyticsCard_PointerEntered"
@@ -681,8 +618,7 @@
                                                   VerticalAlignment="Center"/>
 
                                         <FontIcon Grid.Column="2" 
-                                                 Glyph="&#xE7C1;" 
-                                                 FontSize="14" 
+                                                 Glyph="&#xE7C1;" FontSize="14" 
                                                  Foreground="#34C759" 
                                                  Opacity="0.6" 
                                                  VerticalAlignment="Center" 
