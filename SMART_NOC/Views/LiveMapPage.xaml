@@ -1,0 +1,198 @@
+﻿<Page
+    x:Class="SMART_NOC.Views.LiveMapPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <ThemeShadow x:Name="SharedShadow" />
+    </Page.Resources>
+
+    <Grid>
+        <WebView2 x:Name="MapWebView" 
+                  HorizontalAlignment="Stretch" 
+                  VerticalAlignment="Stretch" 
+                  DefaultBackgroundColor="White"
+                  AutomationProperties.Name="Interactive network incident map"
+                  AutomationProperties.HelpText="Interactive map showing geographic distribution of incidents with clustered markers. Use zoom controls to view different regions. Click markers to see incident details."/>
+
+        <!-- Map Header Panel -->
+        <Grid VerticalAlignment="Top" Padding="28" Margin="0,12,0,0">
+            <Border Background="#E8F3F9" 
+                    BorderBrush="#60B4FF" 
+                    BorderThickness="1" 
+                    CornerRadius="14" 
+                    Padding="24,16" 
+                    HorizontalAlignment="Stretch"
+                    Shadow="{StaticResource SharedShadow}"
+                    Translation="0,0,40"
+                    AutomationProperties.Name="Map filter panel"
+                    AutomationProperties.HelpText="Control panel for filtering incidents by search, region, status, and date range">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Title Row -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center"
+                                    AutomationProperties.Name="Map title section"
+                                    AutomationProperties.HelpText="Header with live map title and total marker count">
+                            <Border Background="{StaticResource InfoColor}" Width="4" Height="36" CornerRadius="2"/>
+
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="LIVE GEO-SPATIAL MONITOR" 
+                                           FontFamily="{StaticResource InterBold}"
+                                           FontSize="13" FontWeight="Bold" 
+                                           Foreground="{StaticResource TextPrimaryBrush}" Opacity="0.9" 
+                                           CharacterSpacing="40"
+                                           AutomationProperties.Name="Map page title"
+                                           AutomationProperties.HeadingLevel="1"/>
+
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE81D;" FontSize="11" Foreground="{StaticResource InfoColor}"/>
+                                    <TextBlock x:Name="TxtTotalMarkers" Text="Initializing..." 
+                                               FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Consolas"
+                                               AutomationProperties.Name="Total markers count"
+                                               AutomationProperties.HelpText="Current count of incident markers displayed on the map"
+                                               AutomationProperties.LiveSetting="Polite"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <AutoSuggestBox Grid.Column="2" x:Name="SearchBox" Width="380" 
+                                        PlaceholderText="Search Ticket ID / Segment..." 
+                                        QueryIcon="Find"
+                                        TextChanged="SearchBox_TextChanged"
+                                        QuerySubmitted="SearchBox_QuerySubmitted"
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource DefaultAutoSuggestBoxStyle}"
+                                        AutomationProperties.Name="Search incidents"
+                                        AutomationProperties.HelpText="Search for incidents by Ticket ID or Segment name. Type to search, press Enter to apply filter."/>
+                    </Grid>
+
+                    <!-- Filter Row -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right"
+                                AutomationProperties.Name="Filter controls"
+                                AutomationProperties.HelpText="Controls to filter incidents by region, status, and date range">
+
+                        <!-- Region Filter (NEW) -->
+                        <ComboBox x:Name="CmbRegion" Width="180" SelectedIndex="0" PlaceholderText="Region" SelectionChanged="CmbRegion_SelectionChanged"
+                                  AutomationProperties.Name="Region filter dropdown"
+                                  AutomationProperties.HelpText="Select geographic region to filter incidents. Options include Central Java, West Java, Jabodetabek, and other Indonesian regions.">
+                            <ComboBoxItem Content="ALL REGIONS" Tag="ALL"/>
+                            <ComboBoxItem Content="Central Java" Tag="Central Java"/>
+                            <ComboBoxItem Content="West Java" Tag="West Java"/>
+                            <ComboBoxItem Content="Jabodetabek" Tag="Jabodetabek"/>
+                            <ComboBoxItem Content="Kalimantan" Tag="Kalimantan"/>
+                            <ComboBoxItem Content="Sumatra South" Tag="Sumatra South"/>
+                            <ComboBoxItem Content="Sumatra North" Tag="Sumatra North"/>
+                            <ComboBoxItem Content="East Java" Tag="East Java"/>
+                            <ComboBoxItem Content="Bali Nusra" Tag="Bali Nusra"/>
+                            <ComboBoxItem Content="Sulawesi" Tag="Sulawesi"/>
+                            <ComboBoxItem Content="Papua Maluku" Tag="Papua Maluku"/>
+                        </ComboBox>
+
+                        <ComboBox x:Name="CmbStatus" Width="160" SelectedIndex="0" PlaceholderText="Status"
+                                  AutomationProperties.Name="Status filter dropdown"
+                                  AutomationProperties.HelpText="Select incident status to filter. Options: All Status, DOWN (Active incidents), UP (Resolved incidents)">
+                            <ComboBoxItem Content="ALL STATUS" Tag="ALL"/>
+                            <ComboBoxItem Content="DOWN (Active)" Tag="DOWN"/>
+                            <ComboBoxItem Content="UP (Resolved)" Tag="UP"/>
+                        </ComboBox>
+
+                        <Border Width="1" Height="24" Background="#20000000"/>
+
+                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"
+                                    AutomationProperties.Name="Date range filters"
+                                    AutomationProperties.HelpText="Select date range to filter incidents by occurrence date">
+                            <CalendarDatePicker x:Name="DateStart" PlaceholderText="Start Date" Width="160"
+                                               AutomationProperties.Name="Start date picker"
+                                               AutomationProperties.HelpText="Select the start date for filtering incidents"/>
+                            <TextBlock Text="to" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                            <CalendarDatePicker x:Name="DateEnd" PlaceholderText="End Date" Width="160"
+                                               AutomationProperties.Name="End date picker"
+                                               AutomationProperties.HelpText="Select the end date for filtering incidents"/>
+                        </StackPanel>
+
+                        <Border Width="1" Height="24" Background="#20000000"/>
+
+                        <Button x:Name="BtnApply" Click="BtnApply_Click" 
+                                Style="{StaticResource AccentButtonStyle}" 
+                                Background="{StaticResource InfoColor}" Foreground="White"
+                                CornerRadius="8" Padding="18,8"
+                                ToolTipService.ToolTip="Apply Filters"
+                                AutomationProperties.Name="Apply filters button"
+                                AutomationProperties.HelpText="Click to apply all filter criteria to refresh the incident map display">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8F9;" FontSize="12"/>
+                                <TextBlock Text="APPLY" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource InterBold}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button x:Name="BtnReset" Click="BtnReset_Click" 
+                                Style="{StaticResource SubtletyButtonStyle}" 
+                                ToolTipService.ToolTip="Clear Filters"
+                                Padding="10,8"
+                                AutomationProperties.Name="Reset filters button"
+                                AutomationProperties.HelpText="Click to clear all filters and show all incidents on the map">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay" 
+              Visibility="Visible" 
+              Canvas.ZIndex="99" 
+              Background="#F0FFFFFF" 
+              HorizontalAlignment="Stretch" 
+              VerticalAlignment="Stretch"
+              AutomationProperties.Name="Loading overlay"
+              AutomationProperties.HelpText="Loading indicator displayed while map is initializing and data is being loaded"
+              AutomationProperties.LiveSetting="Polite">
+
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="24">
+                <ProgressRing x:Name="LoadingRing" IsActive="True" Width="72" Height="72" Foreground="{StaticResource InfoColor}"
+                              AutomationProperties.Name="Loading progress ring"
+                              AutomationProperties.HelpText="Animated loading indicator showing that the application is processing your request"/>
+
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="TxtLoadingTitle" 
+                               Text="INITIALIZING MAP" 
+                               FontFamily="{StaticResource InterBold}" 
+                               Foreground="{StaticResource TextPrimaryBrush}" 
+                               HorizontalAlignment="Center" 
+                               CharacterSpacing="50" 
+                               FontSize="15"
+                               FontWeight="Bold"
+                               AutomationProperties.Name="Loading title"
+                               AutomationProperties.HelpText="Current loading operation description"
+                               AutomationProperties.LiveSetting="Polite"/>
+
+                    <TextBlock x:Name="TxtLoadingSub" 
+                               Text="Triangulating incident coordinates..." 
+                               FontFamily="Consolas" 
+                               Foreground="{StaticResource TextSecondaryBrush}" 
+                               FontSize="12" 
+                               HorizontalAlignment="Center"
+                               AutomationProperties.Name="Loading subtitle"
+                               AutomationProperties.HelpText="Detailed description of current loading step"
+                               AutomationProperties.LiveSetting="Polite"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

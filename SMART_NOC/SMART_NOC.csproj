@@ -1,0 +1,87 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+		<RootNamespace>SMART_NOC</RootNamespace>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<Platforms>x86;x64;ARM64</Platforms>
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<PublishProfile>win-$(Platform).pubxml</PublishProfile>
+
+		<UseWinUI>true</UseWinUI>
+		<WindowsPackageType>None</WindowsPackageType>
+		<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+
+		<PublishTrimmed>false</PublishTrimmed>
+		<PublishReadyToRun>false</PublishReadyToRun>
+		<TrimMode>copyused</TrimMode>
+
+		<EnableDefaultPageItems>false</EnableDefaultPageItems>
+		<EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+		<GenerateAppxPackageOnBuild>false</GenerateAppxPackageOnBuild>
+		<DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="SplashWindow.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ApplicationDefinition Include="App.xaml" Generator="MSBuild:Compile" />
+		<Page Include="MainWindow.xaml" Generator="MSBuild:Compile" />
+		<Page Include="SplashWindow.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Include="Views\DashboardPage.xaml" Generator="MSBuild:Compile" />
+		<Page Include="Views\HandoverPage.xaml" Generator="MSBuild:Compile" />
+		<Page Include="Views\HistoryPage.xaml" Generator="MSBuild:Compile" />
+		<Page Include="Views\LiveMapPage.xaml" Generator="MSBuild:Compile" />
+		<Page Include="Views\SettingsPage.xaml" Generator="MSBuild:Compile" />
+		<Page Include="Views\TicketDetailPage.xaml" Generator="MSBuild:Compile" />
+		<Page Include="Views\TicketFormView.xaml" Generator="MSBuild:Compile" />
+		<Page Include="Views\TicketPage.xaml" Generator="MSBuild:Compile" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.Shimmer" Version="0.1.251217-build.2433" />
+		<PackageReference Include="CommunityToolkit.WinUI.Animations" Version="8.2.251219" />
+		<PackageReference Include="QuestPDF" Version="2025.12.1" />
+
+		<PackageReference Include="ClosedXML" Version="0.105.0" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.RadialGauge" Version="8.2.251219" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+		<PackageReference Include="CommunityToolkit.WinUI.UI.Controls.DataGrid" Version="7.1.2" />
+		<PackageReference Include="LiveChartsCore.SkiaSharpView.WinUI" Version="2.0.0-rc6.1" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.0-experimental3" />
+		<PackageReference Include="ExcelDataReader" Version="3.8.0" />
+		<PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
+		<PackageReference Include="MsgReader" Version="6.0.6" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.0" />
+		<PackageReference Include="WinUIEx" Version="2.9.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Update="Assets\SplashScreen.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Database_NOC.xlsx">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\AnimationStyles.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</None>
+	</ItemGroup>
+
+	<Target Name="ForceCopyPri" AfterTargets="Publish">
+		<Message Text="⚠️ MEMAKSA COPY resources.pri AGAR TIDAK CRASH..." Importance="high" />
+		<Copy SourceFiles="$(OutDir)resources.pri" DestinationFolder="$(PublishDir)" Condition="Exists('$(OutDir)resources.pri')" />
+		<Copy SourceFiles="$(OutDir)SMART_NOC.pri" DestinationFolder="$(PublishDir)" Condition="Exists('$(OutDir)SMART_NOC.pri')" />
+	</Target>
+</Project>

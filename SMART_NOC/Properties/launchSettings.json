@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SMART_NOC (Unpackaged)": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    }
+  }
+}
