@@ -16,31 +16,26 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- 🎨 PREMIUM TITLE BAR WITH GLASSMORPHISM -->
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="60" Background="Transparent" ColumnSpacing="16" Padding="28,0">
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Canvas.ZIndex="999" Height="60" Background="Transparent" ColumnSpacing="16" Padding="28,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Window Drag Region (spans entire width) -->
             <Grid x:Name="WindowDragRegion" Grid.Column="0" Grid.ColumnSpan="3" Background="Transparent" IsHitTestVisible="True" 
                   AutomationProperties.Name="Window title bar"
                   AutomationProperties.HelpText="Drag to move window around the screen" />
 
-            <!-- 🔥 ENHANCED BRANDING SECTION -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center" IsHitTestVisible="False"
                         AutomationProperties.Name="Application branding"
                         AutomationProperties.HelpText="SMART NOC Commander - Network Operations Center application">
-                <!-- Logo with Glow Effect -->
                 <Border Width="32" Height="32" CornerRadius="8" Background="#00B4FF" Opacity="0.15"
                         AutomationProperties.Name="Application logo"
                         AutomationProperties.HelpText="SMART NOC logo icon">
                     <FontIcon Glyph="&#xE8E0;" Foreground="#00B4FF" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
 
-                <!-- Brand Text -->
                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <TextBlock Text="SMART NOC" FontFamily="{StaticResource InterBold}" FontSize="14" Foreground="White" CharacterSpacing="80" VerticalAlignment="Center" FontWeight="Bold"
                                AutomationProperties.Name="Application name: SMART NOC"
@@ -51,7 +46,6 @@
                                AutomationProperties.HelpText="Full application name is SMART NOC COMMANDER"/>
                 </StackPanel>
 
-                <!-- Status Indicator -->
                 <Border Padding="8,4,8,4" Background="#10B4FF3B" BorderBrush="#B4FF3B" BorderThickness="1" CornerRadius="6" Margin="16,0,0,0"
                         AutomationProperties.Name="System status indicator"
                         AutomationProperties.HelpText="Current system status is OPERATIONAL (green indicator means system is running normally)"
@@ -67,16 +61,13 @@
                 </Border>
             </StackPanel>
 
-            <!-- 🔥 ENHANCED RIGHT SECTION -->
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" IsHitTestVisible="True"
                         AutomationProperties.Name="Window control panel"
                         AutomationProperties.HelpText="Contains quick action buttons and toggles">
-                <!-- Separator -->
                 <Border Width="1" Height="20" Background="#30FFFFFF" VerticalAlignment="Center"/>
             </StackPanel>
         </Grid>
 
-        <!-- 🎨 MODERN NAVIGATION VIEW -->
         <NavigationView Grid.Row="1" x:Name="NavView" 
                         SelectionChanged="NavView_SelectionChanged" 
                         Loaded="NavView_Loaded"
@@ -89,7 +80,6 @@
                         AutomationProperties.HelpText="Navigation menu to switch between Dashboard, Create Ticket, Live Map, History, and Handover Log pages">
 
             <NavigationView.Resources>
-                <!-- Navigation Item Colors -->
                 <SolidColorBrush x:Key="NavigationViewItemForeground" Color="#E2E8F0"/>
                 <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="#FFFFFF"/>
                 <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="#00B4FF"/>
@@ -124,7 +114,6 @@
                                    AutomationProperties.HelpText="Navigate to Settings page to configure application preferences and system options"/>
             </NavigationView.FooterMenuItems>
 
-            <!-- 🔥 CONTENT FRAME WITH SMOOTH TRANSITIONS -->
             <Frame x:Name="ContentFrame"
                    AutomationProperties.Name="Content area"
                    AutomationProperties.HelpText="Main content area displaying current page">
@@ -136,7 +125,6 @@
             </Frame>
         </NavigationView>
 
-        <!-- 🎨 ENHANCED DEVELOPER CONSOLE PANEL -->
         <Grid Grid.Row="2" x:Name="DevPanel" Visibility="Collapsed" Height="200" 
               Background="#0D1B2A"
               BorderBrush="#30B4FF" BorderThickness="0,1,0,0">
@@ -145,7 +133,6 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Console Header -->
             <Border Background="#1A2D3D" Padding="12,8" BorderBrush="#30B4FF" BorderThickness="0,0,0,1">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -154,13 +141,11 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Title with Icon -->
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE713;" Foreground="#00B4FF" FontSize="12" VerticalAlignment="Center"/>
                         <TextBlock Text="DEBUG CONSOLE" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" FontFamily="{StaticResource InterBold}"/>
                     </StackPanel>
 
-                    <!-- Action Buttons -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
                         <Button x:Name="BtnCopyLog" Click="BtnCopyLog_Click" Padding="8,4" Background="#40FFFFFF" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Copy All Logs">
                             <FontIcon Glyph="&#xE8C8;" FontSize="11" Foreground="White"/>
@@ -175,7 +160,6 @@
                 </Grid>
             </Border>
 
-            <!-- Console Output -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <TextBox x:Name="DevLogBox" 
                          IsReadOnly="True" 
@@ -190,7 +174,6 @@
             </ScrollViewer>
         </Grid>
 
-        <!-- 🎨 ENHANCED STATUS BAR -->
         <Border Grid.Row="3" Background="#0A0E27" BorderBrush="#30B4FF" BorderThickness="0,1,0,0" Padding="20,6"
                 AutomationProperties.Name="Application status bar"
                 AutomationProperties.HelpText="Displays current system status, active processes, and quick action controls">
@@ -201,7 +184,6 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Left Status Section -->
                 <StackPanel Orientation="Horizontal" Spacing="10"
                             AutomationProperties.Name="System status section"
                             AutomationProperties.HelpText="Shows whether system is active or idle">
@@ -212,23 +194,19 @@
                                AutomationProperties.Name="System active status text"
                                AutomationProperties.HelpText="System is currently active and ready for operations"/>
                     <Border Width="1" Height="12" Background="#40FFFFFF" VerticalAlignment="Center"/>
-                    <!-- 🔥 NEW: Quick Status Indicator -->
                     <TextBlock x:Name="TxtStatusIndicator" Text="●" FontSize="12" Foreground="#34C759" VerticalAlignment="Center" Margin="4,0,0,0"
                                AutomationProperties.Name="Status indicator dot"
                                AutomationProperties.HelpText="Green dot indicates all systems are operational"
                                AutomationProperties.LiveSetting="Polite"/>
                 </StackPanel>
 
-                <!-- Center Process/Status Display -->
                 <Grid Grid.Column="1" Margin="12,0" VerticalAlignment="Center"
                       AutomationProperties.Name="Status message area"
                       AutomationProperties.HelpText="Displays current operation status or ready message">
-                    <!-- Normal Status -->
                     <TextBlock x:Name="StatusLog" Text="Ready for operations" FontSize="9" Foreground="White" Opacity="0.7" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontFamily="Consolas"
                                AutomationProperties.Name="Status message"
                                AutomationProperties.LiveSetting="Polite"/>
 
-                    <!-- Process Progress -->
                     <StackPanel x:Name="ProcessPanel" Orientation="Horizontal" Spacing="10" Visibility="Collapsed" VerticalAlignment="Center"
                                 AutomationProperties.Name="Process progress panel"
                                 AutomationProperties.HelpText="Shows active process details with progress bar and cancellation option"
@@ -257,11 +235,9 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Right Toggle Section with Quick Actions -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
                             AutomationProperties.Name="Quick action panel"
                             AutomationProperties.HelpText="Contains quick action buttons and system toggle switches">
-                    <!-- 🔥 NEW: Quick Action Buttons -->
                     <Button x:Name="BtnQuickNewTicket" Padding="8,3" Background="#20B4FF3B" BorderBrush="#B4FF3B" BorderThickness="0.5" CornerRadius="4" Height="22" VerticalAlignment="Center" ToolTipService.ToolTip="New Ticket (F10)"
                             AutomationProperties.Name="Quick new ticket button"
                             AutomationProperties.HelpText="Quickly create a new incident ticket (keyboard shortcut: F10)">

@@ -12,7 +12,7 @@ using System.IO;
 using Microsoft.Web.WebView2.Core;
 using Windows.Storage;
 using System.Text;
-using System.Net; // Wajib untuk WebUtility.HtmlEncode
+using System.Net;
 
 // Mengatasi Ambiguous Reference
 using Page = Microsoft.UI.Xaml.Controls.Page;
@@ -23,6 +23,7 @@ namespace SMART_NOC.Views
     {
         private HistoryService _historyService = new HistoryService();
         private List<TicketLog> _allTickets = new List<TicketLog>();
+        private bool _isMapReady = false; // 🔥 NEW: Flag status kesiapan map
 
         public LiveMapPage()
         {
@@ -32,8 +33,7 @@ namespace SMART_NOC.Views
 
             // Listener komunikasi JS <-> C#
             MapWebView.WebMessageReceived += MapWebView_WebMessageReceived;
-            
-            // 🔥 NEW: Register untuk menerima notifikasi refresh dari halaman lain 🔥
+
             if (MainWindow.Instance != null)
             {
                 MainWindow.Instance.MapPageInstance = this;
@@ -45,14 +45,9 @@ namespace SMART_NOC.Views
             if (MainWindow.Instance != null) MainWindow.Instance.AddLog(msg);
         }
 
-        /// <summary>
-        /// Announce accessibility message to screen readers for dynamic content updates
-        /// </summary>
         private void AnnounceToScreenReader(string message)
         {
-            DebugLog($"[A11Y] 📢 Screen reader announcement: {message}");
-            // Future: Integrate with WinUI 3 LiveRegion when available
-            // For now, this is tracked in debug log
+            DebugLog($"[A11Y] 📢 {message}");
         }
 
         private async void LiveMapPage_Loaded(object sender, RoutedEventArgs e)
@@ -62,21 +57,17 @@ namespace SMART_NOC.Views
             await InitializeMapAsync();
         }
 
-        // --- 🔥 NEW: PUBLIC METHOD UNTUK REFRESH MAP 🔥 ---
         public async Task RefreshMapData()
         {
             try
             {
-                DebugLog("[MAP] 🔄 RefreshMapData called - Reloading tickets from database...");
-                AnnounceToScreenReader("Map data refreshing. Please wait for update...");
+                DebugLog("[MAP] 🔄 RefreshMapData called...");
                 await LoadAndInjectData();
-                DebugLog("[MAP] ✅ RefreshMapData completed successfully!");
-                AnnounceToScreenReader($"Map updated. {(TxtTotalMarkers != null ? TxtTotalMarkers.Text : "Incidents displayed")}");
+                DebugLog("[MAP] ✅ RefreshMapData completed!");
             }
             catch (Exception ex)
             {
                 DebugLog($"[MAP] ❌ RefreshMapData failed: {ex.Message}");
-                AnnounceToScreenReader($"Error updating map: {ex.Message}");
                 CrashLogger.Log(ex, "LiveMapPage_RefreshMapData", "ERROR");
             }
         }
@@ -88,7 +79,6 @@ namespace SMART_NOC.Views
 
             try
             {
-                // Gunakan Default Environment agar stabil
                 await MapWebView.EnsureCoreWebView2Async();
 
                 // Load HTML Skeleton
@@ -98,11 +88,8 @@ namespace SMART_NOC.Views
             catch (Exception ex)
             {
                 DebugLog($"[MAP] Init Failed: {ex.Message}");
-                if (!ex.Message.Contains("initialized"))
-                {
-                    UpdateLoadingState(false);
-                    if (TxtTotalMarkers != null) TxtTotalMarkers.Text = "Gagal memuat peta.";
-                }
+                UpdateLoadingState(false);
+                if (TxtTotalMarkers != null) TxtTotalMarkers.Text = "Gagal memuat peta (WebView Error).";
             }
         }
 
@@ -116,6 +103,7 @@ namespace SMART_NOC.Views
                 if (message == "MAP_READY")
                 {
                     DebugLog("[MAP] Skeleton Ready. Fetching Data...");
+                    _isMapReady = true; // 🔥 Mark Map as Ready
                     await LoadAndInjectData();
                 }
                 else if (message == "RENDER_COMPLETE")
@@ -139,7 +127,6 @@ namespace SMART_NOC.Views
                 _allTickets = await _historyService.GetAllTicketsAsync();
                 if (_allTickets == null) _allTickets = new List<TicketLog>();
 
-                // Langsung jalankan filter default (Show All)
                 await ApplyFilters();
             }
             catch (Exception ex)
@@ -161,28 +148,16 @@ namespace SMART_NOC.Views
                     return;
                 }
 
-                // 🔥 IMPROVED: Cari berdasarkan Ticket ID & Segment PM 🔥
                 var suggestions = _allTickets
-                    .Where(t => 
+                    .Where(t => t != null && (
                         (t.TT_IOH != null && t.TT_IOH.ToLower().Contains(query)) ||
                         (t.SegmentPM != null && t.SegmentPM.ToLower().Contains(query))
-                    )
+                    ))
                     .GroupBy(t => new { t.TT_IOH, t.SegmentPM })
                     .Select(g => $"{g.Key.TT_IOH} • {g.Key.SegmentPM}")
                     .Distinct()
                     .Take(12)
                     .ToList();
-
-                if (suggestions.Count == 0)
-                {
-                    // Fallback: cari hanya by segment
-                    suggestions = _allTickets
-                        .Where(t => t.SegmentPM != null && t.SegmentPM.ToLower().Contains(query))
-                        .Select(t => t.SegmentPM)
-                        .Distinct()
-                        .Take(12)
-                        .ToList();
-                }
 
                 sender.ItemsSource = suggestions;
             }
@@ -201,60 +176,56 @@ namespace SMART_NOC.Views
 
         private void BtnReset_Click(object sender, RoutedEventArgs e)
         {
-            SearchBox.Text = "";
-            CmbRegion.SelectedIndex = 0;
-            CmbStatus.SelectedIndex = 0;
-            DateStart.Date = null;
-            DateEnd.Date = null;
+            if (SearchBox != null) SearchBox.Text = "";
+            if (CmbRegion != null) CmbRegion.SelectedIndex = 0;
+            if (CmbStatus != null) CmbStatus.SelectedIndex = 0;
+            if (DateStart != null) DateStart.Date = null;
+            if (DateEnd != null) DateEnd.Date = null;
             _ = ApplyFilters();
         }
 
-        // 🔥 NEW: EVENT HANDLER FOR REGION DROPDOWN - AUTO APPLY FILTER 🔥
         private async void CmbRegion_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             await ApplyFilters();
         }
 
-        // --- 5. LOGIC FILTER & GROUPING ---
+        // --- 5. LOGIC FILTER & GROUPING (FIXED CRASH) ---
         private async Task ApplyFilters()
         {
+            // 🔥 Safety Check: Jangan jalan kalau _allTickets belum siap atau kosong
+            if (_allTickets == null) return;
+
             UpdateLoadingState(true, "MEMFILTER DATA...", "Menerapkan kriteria & grouping...");
 
             try
             {
                 // Ambil nilai UI di thread utama
-                string searchQuery = SearchBox.Text?.Trim().ToUpper() ?? "";
-                
-                // 🔥 NEW: REGION FILTER 🔥
+                string searchQuery = SearchBox?.Text?.Trim().ToUpper() ?? "";
+
                 string regionTag = "ALL";
-                if (CmbRegion.SelectedItem is ComboBoxItem regionItem && regionItem.Tag != null)
+                if (CmbRegion?.SelectedItem is ComboBoxItem regionItem && regionItem.Tag != null)
                 {
                     regionTag = regionItem.Tag.ToString();
                 }
-                
+
                 string statusTag = "ALL";
-                if (CmbStatus.SelectedItem is ComboBoxItem statusItem && statusItem.Tag != null)
+                if (CmbStatus?.SelectedItem is ComboBoxItem statusItem && statusItem.Tag != null)
                 {
                     statusTag = statusItem.Tag.ToString();
                 }
 
-                DateTime? dStart = DateStart.Date?.Date;
-                DateTime? dEnd = DateEnd.Date?.Date;
+                DateTime? dStart = DateStart?.Date?.Date;
+                DateTime? dEnd = DateEnd?.Date?.Date;
 
                 var markersData = await Task.Run(() =>
                 {
-                    // 1. Ambil Data
-                    IEnumerable<TicketLog> queryData = _allTickets;
+                    IEnumerable<TicketLog> queryData = _allTickets.Where(t => t != null);
 
-                    // 2. Filter Region (Case Insensitive) 🔥 NEW 🔥
                     if (regionTag != "ALL")
                     {
-                        queryData = queryData.Where(t =>
-                            t.Region != null && t.Region.Equals(regionTag, StringComparison.OrdinalIgnoreCase)
-                        );
+                        queryData = queryData.Where(t => t.Region != null && t.Region.Equals(regionTag, StringComparison.OrdinalIgnoreCase));
                     }
 
-                    // 3. Filter Search Text (Case Insensitive)
                     if (!string.IsNullOrWhiteSpace(searchQuery))
                     {
                         queryData = queryData.Where(t =>
@@ -263,7 +234,6 @@ namespace SMART_NOC.Views
                         );
                     }
 
-                    // 4. Filter Status (Case Insensitive & Robust)
                     if (statusTag == "DOWN")
                     {
                         queryData = queryData.Where(t => t.Status != null && t.Status.ToUpper().Contains("DOWN"));
@@ -271,23 +241,16 @@ namespace SMART_NOC.Views
                     else if (statusTag == "UP")
                     {
                         queryData = queryData.Where(t => t.Status != null &&
-                            (t.Status.ToUpper().Contains("UP") ||
-                             t.Status.ToUpper().Contains("CLOSE") ||
-                             t.Status.ToUpper().Contains("RESOLVE")));
+                            (t.Status.ToUpper().Contains("UP") || t.Status.ToUpper().Contains("CLOSE") || t.Status.ToUpper().Contains("RESOLVE")));
                     }
 
-                    // 5. Filter Tanggal
-                    if (dStart.HasValue)
-                    {
-                        queryData = queryData.Where(t => ParseDateSafe(t.OccurTime) >= dStart.Value);
-                    }
+                    if (dStart.HasValue) queryData = queryData.Where(t => ParseDateSafe(t.OccurTime) >= dStart.Value);
                     if (dEnd.HasValue)
                     {
                         DateTime endOfDay = dEnd.Value.AddDays(1).AddTicks(-1);
                         queryData = queryData.Where(t => ParseDateSafe(t.OccurTime) <= endOfDay);
                     }
 
-                    // 6. GROUPING & VALIDASI (Hanya ambil yang punya koordinat valid)
                     var groupedByLoc = queryData
                         .Where(t => !string.IsNullOrEmpty(t.CutPoint) && ExtractLatLong(t.CutPoint) != null)
                         .GroupBy(t => t.CutPoint);
@@ -296,33 +259,42 @@ namespace SMART_NOC.Views
                     {
                         var tickets = grp.ToList();
                         var count = tickets.Count;
-                        var latLong = ExtractLatLong(grp.Key!); // Method ini aman karena sudah difilter di atas
+                        var latLong = ExtractLatLong(grp.Key!);
 
-                        // Cek status grup (Merah jika ada min. 1 tiket DOWN)
-                        bool isGroupDown = tickets.Any(t => t.Status != null && t.Status.ToUpper().Contains("DOWN"));
+                        if (latLong == null) return null;
+
+                        bool isGroupDown = tickets.Any(t => t != null && t.Status != null && t.Status.ToUpper().Contains("DOWN"));
 
                         string popupHtml = (count == 1)
-                            ? GeneratePopupHtml(tickets[0], isGroupDown, latLong!.Item1, latLong.Item2)
-                            : GenerateMultiPopupHtml(tickets, isGroupDown, latLong!.Item1, latLong.Item2);
+                            ? GeneratePopupHtml(tickets[0], isGroupDown, latLong.Item1, latLong.Item2)
+                            : GenerateMultiPopupHtml(tickets, isGroupDown, latLong.Item1, latLong.Item2);
 
                         return new
                         {
-                            lat = latLong!.Item1,
+                            lat = latLong.Item1,
                             lng = latLong.Item2,
                             count = count,
                             desc = popupHtml,
                             statusType = isGroupDown ? "down" : "up"
                         };
-                    }).ToList();
+                    })
+                    .Where(x => x != null)
+                    .ToList();
                 });
 
-                // Update UI Text
                 if (TxtTotalMarkers != null)
                     TxtTotalMarkers.Text = $"Menampilkan {markersData.Count} Lokasi ({markersData.Sum(m => m.count)} Tiket).";
 
-                // Kirim Data ke WebView
-                string jsonString = JsonConvert.SerializeObject(markersData);
-                MapWebView.CoreWebView2.PostWebMessageAsJson(jsonString);
+                // 🔥 CRITICAL FIX: Cek apakah CoreWebView2 sudah siap sebelum kirim data
+                if (_isMapReady && MapWebView != null && MapWebView.CoreWebView2 != null)
+                {
+                    string jsonString = JsonConvert.SerializeObject(markersData);
+                    MapWebView.CoreWebView2.PostWebMessageAsJson(jsonString);
+                }
+                else
+                {
+                    DebugLog("[MAP] ⚠️ Skipped map update: WebView not ready yet.");
+                }
 
                 UpdateLoadingState(false);
             }
@@ -334,15 +306,13 @@ namespace SMART_NOC.Views
         }
 
         // --- 6. HTML GENERATORS ---
-
-        // Popup untuk 1 Tiket
         private string GeneratePopupHtml(TicketLog t, bool isDown, double lat, double lng)
         {
+            if (t == null) return "";
             string color = isDown ? "#ff3b30" : "#34c759";
             string gmaps = $"http://maps.google.com/?q={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)},{lng.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
             string duration = CalculateDuration(t);
 
-            // Encode teks untuk keamanan HTML
             string safeId = WebUtility.HtmlEncode(t.TT_IOH ?? "-");
             string safeSeg = WebUtility.HtmlEncode(t.SegmentPM ?? "-");
             string safeStatus = WebUtility.HtmlEncode(t.Status ?? "-");
@@ -355,97 +325,57 @@ namespace SMART_NOC.Views
                             <span style='background:rgba(255,255,255,0.2); font-size:10px; padding:3px 6px; border-radius:4px;'>{duration}</span>
                         </div>
                         <div style='padding:14px; border:1px solid #ddd; border-top:none; border-radius:0 0 6px 6px; background:white;'>
-                            <div style='font-size:10px; color:#999; font-weight:bold; text-transform:uppercase; margin-bottom:10px;'>DETAILS</div>
-                            
-                            <div style='margin-bottom:8px;'>
-                                <div style='font-size:10px; color:#888;'>REGION</div>
-                                <div style='font-size:12px; font-weight:500; color:#0078d4;'>{safeRegion}</div>
-                            </div>
-                            
-                            <div style='margin-bottom:8px;'>
-                                <div style='font-size:10px; color:#888;'>SEGMENT</div>
-                                <div style='font-size:12px; font-weight:500;'>{safeSeg}</div>
-                            </div>
-                            
+                            <div style='margin-bottom:8px;'><div style='font-size:10px; color:#888;'>REGION</div><div style='font-size:12px; font-weight:500; color:#0078d4;'>{safeRegion}</div></div>
+                            <div style='margin-bottom:8px;'><div style='font-size:10px; color:#888;'>SEGMENT</div><div style='font-size:12px; font-weight:500;'>{safeSeg}</div></div>
                             <div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>
-                                <div>
-                                    <div style='font-size:10px; color:#888;'>STATUS</div>
-                                    <div style='font-weight:bold; color:{color}; font-size:12px;'>{safeStatus}</div>
-                                </div>
-                                <div>
-                                    <div style='font-size:10px; color:#888;'>ROOT CAUSE</div>
-                                    <div style='font-size:11px; background:#f0f0f0; padding:3px 4px; border-radius:3px; overflow:hidden; text-overflow:ellipsis; max-height:30px;'>{safeRootCause}</div>
-                                </div>
+                                <div><div style='font-size:10px; color:#888;'>STATUS</div><div style='font-weight:bold; color:{color}; font-size:12px;'>{safeStatus}</div></div>
+                                <div><div style='font-size:10px; color:#888;'>ROOT CAUSE</div><div style='font-size:11px; background:#f0f0f0; padding:3px 4px; border-radius:3px; overflow:hidden; text-overflow:ellipsis; max-height:30px;'>{safeRootCause}</div></div>
                             </div>
-                            
-                            <div style='margin-bottom:10px; padding:8px; background:#f5f5f5; border-radius:4px; border-left:3px solid {color};'>
-                                <div style='font-size:10px; color:#666;'>📍 Coordinates</div>
-                                <div style='font-size:11px; font-family:Consolas; color:#333; font-weight:bold;'>{lat:F4}, {lng:F4}</div>
-                            </div>
-                            
-                            <a href='{gmaps}' target='_blank' style='display:block; text-align:center; background:#0078d4; color:white; text-decoration:none; padding:9px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer;'>📍 Open Google Maps</a>
+                            <a href='{gmaps}' target='_blank' style='display:block; text-align:center; background:#0078d4; color:white; text-decoration:none; padding:9px; border-radius:4px; font-size:12px; font-weight:bold;'>📍 Open Google Maps</a>
                         </div>
                       </div>";
         }
 
-        // Popup untuk Banyak Tiket (List) dengan Header Cut Point
         private string GenerateMultiPopupHtml(List<TicketLog> tickets, bool isGroupDown, double lat, double lng)
         {
             string headerColor = isGroupDown ? "#ff3b30" : "#34c759";
             string gmaps = $"http://maps.google.com/?q={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)},{lng.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
-            // 🔥 AMBIL NAMA CUT POINT (Header) 🔥
             string rawHeaderTitle = tickets.FirstOrDefault()?.CutPoint ?? "Unknown Location";
             string safeHeaderTitle = WebUtility.HtmlEncode(rawHeaderTitle);
-            
-            // 🔥 REGION INFO DARI TICKET PERTAMA 🔥
             string headerRegion = WebUtility.HtmlEncode(tickets.FirstOrDefault()?.Region ?? "-");
-            
-            // HITUNG STATISTICS
-            int downCount = tickets.Count(t => t.Status != null && t.Status.ToUpper().Contains("DOWN"));
+
+            int downCount = tickets.Count(t => t != null && t.Status != null && t.Status.ToUpper().Contains("DOWN"));
             int upCount = tickets.Count - downCount;
 
             StringBuilder sb = new StringBuilder();
-
             sb.Append($@"<div style='font-family: Segoe UI; min-width:320px; color:#333;'>
                         <div style='background:{headerColor}; color:white; padding:12px; border-radius:6px 6px 0 0;'>
                             <div style='display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;'>
-                                <div>
-                                    <strong style='font-size:14px; display:block;'>{tickets.Count} Tiket</strong>
-                                    <div style='font-size:11px; opacity:0.95; margin-top:3px; line-height:1.3;'>{safeHeaderTitle}</div>
-                                </div>
-                                <a href='{gmaps}' target='_blank' style='color:white; font-size:11px; text-decoration:underline; white-space:nowrap;'>Maps ↗</a>
+                                <div><strong style='font-size:14px; display:block;'>{tickets.Count} Tiket</strong><div style='font-size:11px; opacity:0.95; margin-top:3px;'>{safeHeaderTitle}</div></div>
+                                <a href='{gmaps}' target='_blank' style='color:white; font-size:11px; text-decoration:underline;'>Maps ↗</a>
                             </div>
-                            
                             <div style='font-size:10px; opacity:0.85; padding-top:8px; border-top:1px solid rgba(255,255,255,0.3); display:grid; grid-template-columns:1fr 1fr; gap:8px;'>
-                                <div>🔴 DOWN: <strong>{downCount}</strong></div>
-                                <div>🟢 UP: <strong>{upCount}</strong></div>
+                                <div>🔴 DOWN: <strong>{downCount}</strong></div><div>🟢 UP: <strong>{upCount}</strong></div>
                             </div>
-                            
-                            <div style='font-size:10px; opacity:0.85; margin-top:6px;'>📍 Region: <strong>{headerRegion}</strong></div>
                         </div>
-                        
                         <div style='max-height:300px; overflow-y:auto; border:1px solid #ddd; border-top:none; background:white;'>");
 
             foreach (var t in tickets)
             {
+                if (t == null) continue;
                 bool isItemDown = t.Status != null && t.Status.ToUpper().Contains("DOWN");
                 string itemColor = isItemDown ? "#ff3b30" : "#34c759";
-                string duration = CalculateDuration(t);
-
                 string safeId = WebUtility.HtmlEncode(t.TT_IOH ?? "-");
                 string safeSeg = WebUtility.HtmlEncode(t.SegmentPM ?? "-");
                 string safeStatus = WebUtility.HtmlEncode(t.Status ?? "-");
-                string safeRootCause = WebUtility.HtmlEncode(t.RootCause ?? "-");
 
                 sb.Append($@"<div style='padding:11px; border-bottom:1px solid #eee; background:#fafafa;'>
                                 <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;'>
                                     <strong style='color:{itemColor}; font-size:12px;'>{safeId}</strong>
-                                    <span style='font-size:9px; background:white; padding:2px 4px; border-radius:3px; border:1px solid #ddd;'>{duration}</span>
                                 </div>
                                 <div style='font-size:11px; color:#555; margin-bottom:2px;'>{safeSeg}</div>
                                 <div style='font-size:10px; color:#999;'>{safeStatus}</div>
-                                {(string.IsNullOrEmpty(safeRootCause) || safeRootCause == "-" ? "" : $"<div style='font-size:9px; color:#666; margin-top:2px; padding:2px 0;'>Root: <em>{safeRootCause}</em></div>")}
                              </div>");
             }
 
@@ -455,20 +385,13 @@ namespace SMART_NOC.Views
 
         private string CalculateDuration(TicketLog t)
         {
+            if (t == null) return "-";
             if (DateTime.TryParse(t.OccurTime, out DateTime occ))
             {
-                TimeSpan span = TimeSpan.Zero;
-
-                // Fallback Logic: Cek Status jika ResolvedDate tidak ada
                 if (t.Status != null && (t.Status.Contains("CLOSE") || t.Status.Contains("UP") || t.Status.Contains("RESOLVE")))
-                {
                     return "RESOLVED";
-                }
-                else
-                {
-                    span = DateTime.Now - occ;
-                }
 
+                var span = DateTime.Now - occ;
                 if (span.TotalSeconds > 0)
                 {
                     if (span.TotalDays >= 1) return $"{(int)span.TotalDays}d {span.Hours}h";
@@ -477,8 +400,6 @@ namespace SMART_NOC.Views
             }
             return "-";
         }
-
-        // --- 7. HELPER LAIN ---
 
         private DateTime ParseDateSafe(string dateStr)
         {
@@ -493,66 +414,21 @@ namespace SMART_NOC.Views
             if (string.IsNullOrEmpty(cutPoint)) return null;
             try
             {
-                // 🔥 TRY METHOD 1: Extract dari dalam kurung "(lat, lon)" 🔥
                 var match = System.Text.RegularExpressions.Regex.Match(cutPoint, @"\(([^)]+)\)");
                 if (match.Success)
                 {
-                    var coords = match.Groups[1].Value.Trim();
-                    
-                    // Validasi kurung tidak kosong
-                    if (string.IsNullOrWhiteSpace(coords)) return null;
-                    
-                    var parts = coords.Split(',');
-                    if (parts.Length == 2)
+                    var coords = match.Groups[1].Value.Trim().Split(',');
+                    if (coords.Length == 2)
                     {
-                        string latStr = parts[0].Trim();
-                        string lngStr = parts[1].Trim();
-                        
-                        // Validasi kedua bagian tidak kosong
-                        if (string.IsNullOrWhiteSpace(latStr) || string.IsNullOrWhiteSpace(lngStr)) 
-                            return null;
-                        
-                        if (double.TryParse(latStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double lat) &&
-                            double.TryParse(lngStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double lng))
+                        if (double.TryParse(coords[0].Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double lat) &&
+                            double.TryParse(coords[1].Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double lng))
                         {
-                            // Validasi range koordinat Indonesia (lat: -11 to 6, lon: 95 to 141)
-                            if (lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141)
-                            {
-                                return Tuple.Create(lat, lng);
-                            }
-                        }
-                    }
-                }
-
-                // 🔥 TRY METHOD 2: Direct parsing (fallback) 🔥
-                var rawParts = cutPoint.Split(',');
-                if (rawParts.Length >= 2)
-                {
-                    string latStr = rawParts[0].Trim();
-                    string lngStr = rawParts[1].Trim();
-                    
-                    // Remove any trailing parentheses
-                    latStr = System.Text.RegularExpressions.Regex.Replace(latStr, @"[()]+", "").Trim();
-                    lngStr = System.Text.RegularExpressions.Regex.Replace(lngStr, @"[()]+", "").Trim();
-                    
-                    if (string.IsNullOrWhiteSpace(latStr) || string.IsNullOrWhiteSpace(lngStr))
-                        return null;
-                    
-                    if (double.TryParse(latStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double lat) &&
-                        double.TryParse(lngStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double lng))
-                    {
-                        // Validasi range koordinat Indonesia
-                        if (lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141)
-                        {
-                            return Tuple.Create(lat, lng);
+                            if (lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141) return Tuple.Create(lat, lng);
                         }
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                DebugLog($"[COORD PARSE ERROR] {cutPoint}: {ex.Message}");
-            }
+            catch (Exception) { }
             return null;
         }
 
@@ -568,7 +444,6 @@ namespace SMART_NOC.Views
             }
         }
 
-        // --- 8. HTML SKELETON (DENGAN FITUR ADVANCED) ---
         private string GetMapSkeletonHtml()
         {
             return """
