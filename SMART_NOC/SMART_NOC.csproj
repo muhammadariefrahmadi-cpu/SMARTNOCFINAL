@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
 		<RootNamespace>SMART_NOC</RootNamespace>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
@@ -20,6 +20,7 @@
 		<EnableDefaultPageItems>false</EnableDefaultPageItems>
 		<EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
 		<GenerateAppxPackageOnBuild>false</GenerateAppxPackageOnBuild>
+		<UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
 		<DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
@@ -55,7 +56,9 @@
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
 		<PackageReference Include="CommunityToolkit.WinUI.UI.Controls.DataGrid" Version="7.1.2" />
 		<PackageReference Include="LiveChartsCore.SkiaSharpView.WinUI" Version="2.0.0-rc6.1" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.0-experimental3" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250907003" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
 		<PackageReference Include="ExcelDataReader" Version="3.8.0" />
 		<PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
 		<PackageReference Include="MsgReader" Version="6.0.6" />
